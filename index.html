@@ -8,7 +8,56 @@
 </head>
 <body>
     <h1>Minesweeper</h1>
-    <div id="game-board"></div>
+    <div class="toolbar" aria-label="Game controls">
+        <div class="toolbar__group">
+            <label class="toolbar__label" for="difficulty">Difficulty</label>
+            <select id="difficulty" class="toolbar__select">
+                <option value="normal" selected>Normal (10×10, 15)</option>
+                <option value="easy">Easy (9×9, 10)</option>
+                <option value="medium">Medium (16×16, 40)</option>
+                <option value="hard">Hard (16×30, 99)</option>
+            </select>
+        </div>
+
+	        <div class="toolbar__group">
+	            <label class="toolbar__label" for="seed">Seed</label>
+	            <input id="seed" class="toolbar__input" type="text" spellcheck="false" autocomplete="off" inputmode="text" placeholder="e.g. cafe1234 or cafe1234@4,4">
+	            <button id="new-seed" class="toolbar__button" type="button">New seed</button>
+	            <button id="copy-link" class="toolbar__button" type="button" disabled>Copy replay link</button>
+	            <label class="toolbar__checkbox">
+	                <input id="no-guess" type="checkbox">
+	                No-guess board
+	            </label>
+	        </div>
+
+        <div class="toolbar__group">
+            <button id="restart" class="toolbar__button" type="button">Restart</button>
+            <label class="toolbar__checkbox">
+                <input id="require-flags" type="checkbox">
+                Require flags to win
+            </label>
+        </div>
+
+        <div class="toolbar__group toolbar__stats" aria-label="Stats">
+            <div class="stat">
+                <div class="stat__label">Mines</div>
+                <div id="mine-counter" class="stat__value">0</div>
+            </div>
+            <div class="stat">
+                <div class="stat__label">Time</div>
+                <div id="timer" class="stat__value">0</div>
+            </div>
+            <div class="stat stat--status">
+                <div class="stat__label">Status</div>
+                <div id="status" class="stat__value">Ready</div>
+            </div>
+        </div>
+	    </div>
+
+	    <div id="board-wrapper">
+	        <div id="game-board"></div>
+	    </div>
+    <script src="engine.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
