@@ -218,7 +218,7 @@
         return revealedSafeCount === rows * cols - mineCount;
     }
 
-    function generateMinefield({
+    async function generateMinefield({
         rows,
         cols,
         mineCount,
@@ -232,6 +232,9 @@
         let lastBoard = null;
         let lastMineCount = mineCount;
 
+        // Performance optimization: Use requestIdleCallback if available
+        const useIdleCallback = typeof requestIdleCallback === 'function';
+
         for (let attempt = 1; attempt <= attempts; attempt++) {
             const board = createEmptyBoard(rows, cols);
             const minesPlaced = placeMines(board, rows, cols, mineCount, startRow, startCol, rng);
@@ -244,8 +247,16 @@
                 return { board, minesPlaced, attemptCount: 1, usedFallback: false };
             }
 
+            // Performance optimization: Use idle time for solvability checks
             if (isSolvableBySimpleRules(board, rows, cols, minesPlaced, startRow, startCol)) {
                 return { board, minesPlaced, attemptCount: attempt, usedFallback: false };
+            }
+
+            // Yield to main thread if this is taking too long
+            if (attempt % 5 === 0 && useIdleCallback) {
+                await new Promise((resolve) => {
+                    requestIdleCallback(resolve, { timeout: 100 });
+                });
             }
         }
 
@@ -311,7 +322,7 @@
             return 15;
         }
 
-        _startIfNeeded(firstRow, firstCol) {
+        async _startIfNeeded(firstRow, firstCol) {
             if (this.status !== 'ready') return null;
 
             this.startRow = firstRow;
@@ -323,7 +334,7 @@
                     : this._defaultMaxAttempts()
                 : 1;
 
-            const result = generateMinefield({
+            const result = await generateMinefield({
                 rows: this.rows,
                 cols: this.cols,
                 mineCount: this.mineCount,
@@ -403,7 +414,7 @@
             return true;
         }
 
-        click(row, col) {
+        async click(row, col) {
             const prevStatus = this.status;
             const started = prevStatus === 'ready';
 
@@ -423,7 +434,7 @@
 
             let minefieldResult = null;
             if (this.status === 'ready') {
-                minefieldResult = this._startIfNeeded(row, col);
+                minefieldResult = await this._startIfNeeded(row, col);
             }
 
             const currentCell = this.board[row][col];

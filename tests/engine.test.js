@@ -44,7 +44,7 @@ test('createSeededRng is deterministic', () => {
     assert.notDeepEqual(seq1, seq3);
 });
 
-test('minefield is deterministic for same seed and first click', () => {
+test('minefield is deterministic for same seed and first click', async () => {
     const config = {
         rows: 10,
         cols: 10,
@@ -55,15 +55,15 @@ test('minefield is deterministic for same seed and first click', () => {
     };
 
     const engine1 = new MinesweeperEngine(config);
-    engine1.click(3, 3);
+    await engine1.click(3, 3);
 
     const engine2 = new MinesweeperEngine(config);
-    engine2.click(3, 3);
+    await engine2.click(3, 3);
 
     assert.deepEqual(getMineIndices(engine1), getMineIndices(engine2));
 });
 
-test('first click safe zone has no mines', () => {
+test('first click safe zone has no mines', async () => {
     const engine = new MinesweeperEngine({
         rows: 10,
         cols: 10,
@@ -72,7 +72,7 @@ test('first click safe zone has no mines', () => {
         noGuess: false
     });
 
-    engine.click(0, 0);
+    await engine.click(0, 0);
     for (let dr = -1; dr <= 1; dr++) {
         for (let dc = -1; dc <= 1; dc++) {
             const r = 0 + dr;
@@ -83,7 +83,7 @@ test('first click safe zone has no mines', () => {
     }
 });
 
-test('adjacentMines matches actual neighboring mine count', () => {
+test('adjacentMines matches actual neighboring mine count', async () => {
     const engine = new MinesweeperEngine({
         rows: 10,
         cols: 10,
@@ -92,7 +92,7 @@ test('adjacentMines matches actual neighboring mine count', () => {
         noGuess: false
     });
 
-    engine.click(4, 4);
+    await engine.click(4, 4);
 
     for (let r = 0; r < engine.rows; r++) {
         for (let c = 0; c < engine.cols; c++) {
@@ -103,7 +103,7 @@ test('adjacentMines matches actual neighboring mine count', () => {
     }
 });
 
-test('noGuess generation produces a board solvable by simple rules', () => {
+test('noGuess generation produces a board solvable by simple rules', async () => {
     const engine = new MinesweeperEngine({
         rows: 9,
         cols: 9,
@@ -113,7 +113,7 @@ test('noGuess generation produces a board solvable by simple rules', () => {
         maxGenerateAttempts: 120
     });
 
-    engine.click(4, 4);
+    await engine.click(4, 4);
 
     assert.equal(engine.generation.usedFallback, false);
     assert.equal(
@@ -121,4 +121,3 @@ test('noGuess generation produces a board solvable by simple rules', () => {
         true
     );
 });
-

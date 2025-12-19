@@ -7,6 +7,10 @@ body {
     color: #333;
     margin: 0;
     padding: 24px 16px 40px;
+    min-height: 100vh;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    user-select: none;
 }
 
 h1 {
@@ -203,3 +207,358 @@ h1 {
 .cell[data-adjacent-mines="6"] { color: #40e0d0; }
 .cell[data-adjacent-mines="7"] { color: #000000; }
 .cell[data-adjacent-mines="8"] { color: #808080; }
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    .toolbar {
+        padding: 12px 8px;
+        gap: 8px 12px;
+    }
+
+    .toolbar__group {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .toolbar__stats {
+        justify-content: space-around;
+        width: 100%;
+    }
+
+    .stat {
+        min-width: 90px;
+        flex: 1;
+        text-align: center;
+    }
+
+    .toolbar__button {
+        padding: 10px 14px;
+        font-size: 16px;
+    }
+
+    .toolbar__input {
+        width: 100%;
+        max-width: 200px;
+        font-size: 16px;
+    }
+
+    .toolbar__select {
+        font-size: 16px;
+    }
+
+    /* Mobile-specific cell sizing */
+    #game-board {
+        --cell-size: 40px;
+        padding: 8px;
+    }
+
+    .cell {
+        font-size: 24px;
+        width: var(--cell-size);
+        height: var(--cell-size);
+    }
+
+    .cell.flagged {
+        font-size: 28px;
+    }
+
+    .cell.mine {
+        font-size: 28px;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 16px 12px 32px;
+    }
+
+    h1 {
+        font-size: 20px;
+    }
+
+    .toolbar {
+        padding: 10px 6px;
+    }
+
+    .toolbar__button {
+        padding: 12px 16px;
+        font-size: 18px;
+    }
+
+    .toolbar__input {
+        max-width: 160px;
+        font-size: 14px;
+    }
+
+    /* Smaller cells for very small screens */
+    #game-board {
+        --cell-size: 36px;
+        padding: 6px;
+    }
+
+    .cell {
+        font-size: 22px;
+        width: var(--cell-size);
+        height: var(--cell-size);
+    }
+
+    .cell.flagged {
+        font-size: 26px;
+    }
+
+    .cell.mine {
+        font-size: 26px;
+    }
+}
+
+/* Touch-friendly enhancements */
+.cell {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.cell:active {
+    transform: scale(0.98);
+    transition: transform 0.05s ease;
+}
+
+/* Modal styles for mobile help */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.modal__content {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 90%;
+    width: 100%;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.modal__content h2 {
+    margin: 0 0 16px 0;
+    color: #4a4a4a;
+    text-align: center;
+}
+
+.help-section {
+    margin-bottom: 16px;
+    padding: 12px;
+    background: #f5f5f5;
+    border-radius: 8px;
+}
+
+.help-section h3 {
+    margin: 0 0 8px 0;
+    color: #333;
+}
+
+.help-section ul {
+    margin: 8px 0 0 20px;
+    padding: 0;
+}
+
+.help-section li {
+    margin-bottom: 6px;
+}
+
+.help-section p {
+    margin: 8px 0 0 0;
+    color: #666;
+}
+
+#close-help {
+    width: 100%;
+    margin-top: 8px;
+}
+
+/* Flag mode indicator */
+#mobile-flag-toggle[aria-pressed="true"] {
+    background: linear-gradient(#e8f5e9, #c8e6c9);
+    border-color: #4caf50;
+    color: #2e7d32;
+    font-weight: 800;
+    box-shadow: 0 2px 0 #2e7d32 inset;
+}
+
+/* Better focus states for accessibility */
+.cell:focus {
+    outline: 3px solid #2196f3;
+    outline-offset: 2px;
+}
+
+.toolbar__button:focus {
+    outline: 2px solid #2196f3;
+    outline-offset: 2px;
+}
+
+/* Win/Lose animations */
+.cell.mine.revealed {
+    animation: explode 0.3s ease-out;
+}
+
+@keyframes explode {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 0.9;
+    }
+    100% {
+        transform: scale(0.9);
+        opacity: 1;
+    }
+}
+
+/* Victory celebration */
+#game-board.won .cell:not(.mine) {
+    animation: revealAll 0.6s ease-out;
+}
+
+@keyframes revealAll {
+    from {
+        transform: translateY(-2px);
+        opacity: 0.8;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Smooth transitions for better UX */
+.toolbar {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.toolbar:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* Button press animation */
+.toolbar__button:active {
+    transform: translateY(2px) scale(0.98);
+    transition: transform 0.05s ease;
+}
+
+/* Cell press feedback */
+.cell:active {
+    transform: scale(0.95);
+    transition: transform 0.05s ease, box-shadow 0.2s ease;
+}
+
+/* Hover effects with smooth transitions */
+.cell:not(.revealed):hover {
+    background-color: #e8e8e8;
+    transform: translateY(-1px);
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.cell.revealed:hover {
+    background-color: #c8c8c8;
+    transition: background-color 0.2s ease;
+}
+
+/* Status indicator animations */
+.stat--status .stat__value {
+    transition: color 0.3s ease, transform 0.2s ease;
+}
+
+#game-board.won ~ .toolbar .stat--status .stat__value {
+    color: #4caf50;
+    animation: pulse 1s ease-in-out infinite;
+}
+
+#game-board.lost ~ .toolbar .stat--status .stat__value {
+    color: #f44336;
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    75% { transform: translateX(2px); }
+}
+
+/* Modal animations */
+.modal:not([hidden]) {
+    animation: fadeIn 0.2s ease-out;
+}
+
+.modal__content {
+    animation: slideIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Reduced motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+    .cell {
+        transition: none;
+    }
+
+    .cell:active {
+        transform: none;
+    }
+
+    .toolbar {
+        transition: none;
+    }
+
+    .toolbar:hover {
+        transform: none;
+    }
+
+    .toolbar__button:active {
+        transform: none;
+    }
+
+    .cell:not(.revealed):hover {
+        transform: none;
+    }
+
+    .stat--status .stat__value {
+        transition: none;
+    }
+
+    .modal:not([hidden]) {
+        animation: none;
+    }
+
+    .modal__content {
+        animation: none;
+    }
+}
