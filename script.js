@@ -10,6 +10,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const mineCounterEl = document.getElementById('mine-counter');
     const timerEl = document.getElementById('timer');
     const statusEl = document.getElementById('status');
+    const mobileFlagToggle = document.getElementById('mobile-flag-toggle');
+    const mobileHelpBtn = document.getElementById('mobile-help');
+    const mobileHelpModal = document.getElementById('mobile-help-modal');
+    const closeHelpBtn = document.getElementById('close-help');
 
     const DIFFICULTIES = {
         normal: { rows: 10, cols: 10, mines: 15 },
@@ -240,11 +244,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1200);
     }
 
-    gameBoard.addEventListener('click', (e) => {
+    gameBoard.addEventListener('click', async (e) => {
         const coords = getCellFromEventTarget(e.target);
         if (!coords) return;
         const prevStatus = engine.status;
-        const result = engine.click(coords.row, coords.col);
+        const result = await engine.click(coords.row, coords.col);
 
         if (result.started) {
             startTimer();
@@ -263,6 +267,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (engine.status === 'won' || engine.status === 'lost') {
             stopTimer();
             renderAllCells();
+            // Add animation classes
+            gameBoard.classList.remove('won', 'lost');
+            gameBoard.classList.add(engine.status);
+            setTimeout(() => {
+                gameBoard.classList.remove(engine.status);
+            }, 1000);
         } else {
             for (const [r, c] of result.changed) renderCell(r, c);
         }
@@ -408,7 +418,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return generated;
     }
 
-    function resetGame() {
+    async function resetGame() {
         const parsedSeed = parseSeedAndStart(seedInput.value);
         if (parsedSeed.start) {
             pendingAutoStart = pendingAutoStart ?? parsedSeed.start;
@@ -454,7 +464,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (pendingAutoStart) {
             const { row, col } = pendingAutoStart;
             pendingAutoStart = null;
-            const result = engine.click(row, col);
+            const result = await engine.click(row, col);
             if (result.started) startTimer();
             for (const [r, c] of result.changed) renderCell(r, c);
             if (engine.status === 'won' || engine.status === 'lost') {
@@ -506,6 +516,148 @@ document.addEventListener('DOMContentLoaded', () => {
         resetGame();
     });
     copyLinkButton?.addEventListener('click', handleCopyReplayLink);
+
+    // Register Service Worker for offline support
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then((registration) => {
+                    console.log('ServiceWorker registration successful:', registration.scope);
+                })
+                .catch((error) => {
+                    console.log('ServiceWorker registration failed:', error);
+                });
+        });
+    }
+
+    // Performance optimization: Debounce rapid events
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // Performance optimization: Throttle rapid events
+    function throttle(func, limit) {
+        let lastFunc;
+        let lastRan;
+        return function() {
+            const context = this;
+            const args = arguments;
+            if (!lastRan) {
+                func.apply(context, args);
+                lastRan = Date.now();
+            } else {
+                clearTimeout(lastFunc);
+                lastFunc = setTimeout(function() {
+                    if ((Date.now() - lastRan) >= limit) {
+                        func.apply(context, args);
+                        lastRan = Date.now();
+                    }
+                }, limit - (Date.now() - lastRan));
+            }
+        };
+    }
+
+    // Mobile flag mode toggle
+    if (mobileFlagToggle) {
+        mobileFlagToggle.addEventListener('click', () => {
+            const isFlagMode = mobileFlagToggle.getAttribute('aria-pressed') === 'true';
+            mobileFlagToggle.setAttribute('aria-pressed', String(!isFlagMode));
+            mobileFlagToggle.textContent = isFlagMode ? '🚩 Flag Mode' : '✅ Flag Mode On';
+            
+            if (!isFlagMode) {
+                statusEl.textContent = 'Flag Mode: Tap cells to flag/unflag';
+            } else {
+                statusEl.textContent = engine.status === 'ready' ? 'Ready (click a cell to start)' : engine.message;
+            }
+        });
+    }
+
+    // Mobile help modal
+    if (mobileHelpBtn && mobileHelpModal && closeHelpBtn) {
+        mobileHelpBtn.addEventListener('click', () => {
+            mobileHelpModal.style.display = 'flex';
+        });
+
+        closeHelpBtn.addEventListener('click', () => {
+            mobileHelpModal.style.display = 'none';
+        });
+
+        mobileHelpModal.addEventListener('click', (e) => {
+            if (e.target === mobileHelpModal) {
+                mobileHelpModal.style.display = 'none';
+            }
+        });
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && mobileHelpModal.style.display !== 'none') {
+                mobileHelpModal.style.display = 'none';
+            }
+        });
+    }
+
+    // Touch-friendly cell interactions
+    gameBoard.addEventListener('touchstart', (e) => {
+        const coords = getCellFromEventTarget(e.target);
+        if (!coords) return;
+
+        const isFlagMode = mobileFlagToggle && mobileFlagToggle.getAttribute('aria-pressed') === 'true';
+        
+        if (isFlagMode) {
+            e.preventDefault();
+            const prevStatus = engine.status;
+            const result = engine.toggleFlag(coords.row, coords.col);
+
+            for (const [r, c] of result.changed) renderCell(r, c);
+            updateMineCounter();
+
+            if (prevStatus !== engine.status) {
+                stopTimer();
+                renderAllCells();
+                updateStatusUi();
+            }
+        }
+    }, { passive: false });
+
+    // Long press for flagging on mobile
+    let longPressTimer = null;
+    gameBoard.addEventListener('touchstart', (e) => {
+        const coords = getCellFromEventTarget(e.target);
+        if (!coords) return;
+
+        const isFlagMode = mobileFlagToggle && mobileFlagToggle.getAttribute('aria-pressed') === 'true';
+        
+        if (!isFlagMode) {
+            longPressTimer = setTimeout(() => {
+                const prevStatus = engine.status;
+                const result = engine.toggleFlag(coords.row, coords.col);
+
+                for (const [r, c] of result.changed) renderCell(r, c);
+                updateMineCounter();
+
+                if (prevStatus !== engine.status) {
+                    stopTimer();
+                    renderAllCells();
+                    updateStatusUi();
+                }
+            }, 300); // 300ms for long press
+        }
+    });
+
+    gameBoard.addEventListener('touchend', () => {
+        if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+        }
+    });
 
     applyUrlParams();
     resetGame();

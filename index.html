@@ -2,9 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Minesweeper</title>
     <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#4a4a4a">
+    <meta name="description" content="Enhanced Minesweeper with mobile support and performance optimizations">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512x512.png">
 </head>
 <body>
     <h1>Minesweeper</h1>
@@ -52,11 +60,39 @@
                 <div id="status" class="stat__value">Ready</div>
             </div>
         </div>
+
+        <div class="toolbar__group">
+            <button id="mobile-flag-toggle" class="toolbar__button" type="button" aria-pressed="false" aria-label="Toggle flag mode">
+                🚩 Flag Mode
+            </button>
+            <button id="mobile-help" class="toolbar__button" type="button" aria-label="Touch controls help">
+                ℹ️ Help
+            </button>
+        </div>
 	    </div>
 
 	    <div id="board-wrapper">
 	        <div id="game-board"></div>
 	    </div>
+    <div id="mobile-help-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="help-title" style="display: none;">
+        <div class="modal__content">
+            <h2 id="help-title">Mobile Controls</h2>
+            <div class="help-section">
+                <h3>Basic Controls</h3>
+                <ul>
+                    <li><strong>Tap:</strong> Reveal a cell</li>
+                    <li><strong>Long press:</strong> Flag a cell</li>
+                    <li><strong>Flag Mode:</strong> Toggle to flag/unflag cells</li>
+                </ul>
+            </div>
+            <div class="help-section">
+                <h3>Chording</h3>
+                <p>Tap a revealed number with the same number of flags around it to reveal all adjacent cells.</p>
+            </div>
+            <button id="close-help" class="toolbar__button">Got it!</button>
+        </div>
+    </div>
+
     <script src="engine.js"></script>
     <script src="script.js"></script>
 </body>
