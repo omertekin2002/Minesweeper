@@ -398,6 +398,14 @@ h1 {
     outline-offset: 2px;
 }
 
+.cell.keyboard-focused {
+    outline: 3px solid #2196f3;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.3), inset 2px 2px 2px #fff, inset -2px -2px 2px #b0b0b0;
+    z-index: 1;
+    position: relative;
+}
+
 .toolbar__button:focus {
     outline: 2px solid #2196f3;
     outline-offset: 2px;

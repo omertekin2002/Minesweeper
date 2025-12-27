@@ -39,6 +39,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let startTimeMs = 0;
     let pendingAutoStart = null;
     let lastLoadedSeed = null;
+    let focusedRow = 0;
+    let focusedCol = 0;
 
     function stopTimer() {
         if (timerIntervalId !== null) {
@@ -88,12 +90,121 @@ document.addEventListener('DOMContentLoaded', () => {
                 cellEl.className = 'cell';
                 cellEl.dataset.row = String(r);
                 cellEl.dataset.col = String(c);
+                cellEl.setAttribute('tabindex', '0');
+                cellEl.setAttribute('role', 'button');
+                cellEl.setAttribute('aria-label', `Cell at row ${r}, column ${c}`);
                 fragment.appendChild(cellEl);
                 cellEls[r][c] = cellEl;
             }
         }
 
         gameBoard.appendChild(fragment);
+        
+        // Set initial focus to first cell
+        focusedRow = 0;
+        focusedCol = 0;
+        updateFocusedCell();
+    }
+    
+    function updateFocusedCell() {
+        // Remove focus from all cells
+        for (let r = 0; r < engine.rows; r++) {
+            for (let c = 0; c < engine.cols; c++) {
+                if (cellEls[r][c]) {
+                    cellEls[r][c].classList.remove('keyboard-focused');
+                    cellEls[r][c].blur();
+                }
+            }
+        }
+        
+        // Focus the current cell
+        if (cellEls[focusedRow] && cellEls[focusedRow][focusedCol]) {
+            const cell = cellEls[focusedRow][focusedCol];
+            cell.classList.add('keyboard-focused');
+            cell.focus();
+            
+            // Update aria-label with current state
+            const state = engine.getCell(focusedRow, focusedCol);
+            let label = `Cell at row ${focusedRow}, column ${focusedCol}`;
+            if (state.isRevealed) {
+                if (state.isMine) {
+                    label += ', mine';
+                } else if (state.adjacentMines > 0) {
+                    label += `, ${state.adjacentMines} adjacent mines`;
+                } else {
+                    label += ', empty';
+                }
+            } else if (state.isFlagged) {
+                label += ', flagged';
+            } else {
+                label += ', unrevealed';
+            }
+            cell.setAttribute('aria-label', label);
+        }
+    }
+    
+    function moveFocus(deltaRow, deltaCol) {
+        const newRow = Math.max(0, Math.min(engine.rows - 1, focusedRow + deltaRow));
+        const newCol = Math.max(0, Math.min(engine.cols - 1, focusedCol + deltaCol));
+        
+        if (newRow !== focusedRow || newCol !== focusedCol) {
+            focusedRow = newRow;
+            focusedCol = newCol;
+            updateFocusedCell();
+        }
+    }
+    
+    async function handleKeyboardAction(action) {
+        if (!engine || engine.status === 'won' || engine.status === 'lost') return;
+        
+        const coords = { row: focusedRow, col: focusedCol };
+        const prevStatus = engine.status;
+        
+        if (action === 'reveal') {
+            const result = await engine.click(coords.row, coords.col);
+            
+            if (result.started) {
+                startTimer();
+                recordReplayStart({
+                    difficulty: difficultySelect.value,
+                    seed: engine.seed,
+                    noGuess: Boolean(noGuessCheckbox.checked),
+                    requireFlags: Boolean(requireFlagsCheckbox.checked),
+                    startRow: engine.startRow,
+                    startCol: engine.startCol
+                });
+                updateUrlFromState();
+                updateCopyLinkButtonState();
+            }
+            
+            if (engine.status === 'won' || engine.status === 'lost') {
+                stopTimer();
+                renderAllCells();
+                gameBoard.classList.remove('won', 'lost');
+                gameBoard.classList.add(engine.status);
+                setTimeout(() => {
+                    gameBoard.classList.remove(engine.status);
+                }, 1000);
+            } else {
+                for (const [r, c] of result.changed) renderCell(r, c);
+            }
+            
+            if (prevStatus !== engine.status) updateStatusUi();
+            updateMineCounter();
+            updateFocusedCell();
+        } else if (action === 'flag') {
+            const result = engine.toggleFlag(coords.row, coords.col);
+            
+            for (const [r, c] of result.changed) renderCell(r, c);
+            updateMineCounter();
+            
+            if (prevStatus !== engine.status) {
+                stopTimer();
+                renderAllCells();
+                updateStatusUi();
+            }
+            updateFocusedCell();
+        }
     }
 
     function renderCell(row, col) {
@@ -247,6 +358,12 @@ document.addEventListener('DOMContentLoaded', () => {
     gameBoard.addEventListener('click', async (e) => {
         const coords = getCellFromEventTarget(e.target);
         if (!coords) return;
+        
+        // Update keyboard focus when clicking
+        focusedRow = coords.row;
+        focusedCol = coords.col;
+        updateFocusedCell();
+        
         const prevStatus = engine.status;
         const result = await engine.click(coords.row, coords.col);
 
@@ -279,12 +396,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (prevStatus !== engine.status) updateStatusUi();
         updateMineCounter();
+        updateFocusedCell();
     });
 
     gameBoard.addEventListener('contextmenu', (e) => {
         const coords = getCellFromEventTarget(e.target);
         if (!coords) return;
         e.preventDefault();
+        
+        // Update keyboard focus when right-clicking
+        focusedRow = coords.row;
+        focusedCol = coords.col;
+        updateFocusedCell();
+        
         const prevStatus = engine.status;
         const result = engine.toggleFlag(coords.row, coords.col);
 
@@ -295,6 +419,50 @@ document.addEventListener('DOMContentLoaded', () => {
             stopTimer();
             renderAllCells();
             updateStatusUi();
+        }
+        updateFocusedCell();
+    });
+    
+    // Keyboard navigation
+    gameBoard.addEventListener('keydown', async (e) => {
+        // Don't interfere if user is typing in an input field
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON') {
+            return;
+        }
+        
+        const cellCoords = getCellFromEventTarget(e.target);
+        if (cellCoords) {
+            focusedRow = cellCoords.row;
+            focusedCol = cellCoords.col;
+        }
+        
+        switch (e.key) {
+            case 'ArrowUp':
+                e.preventDefault();
+                moveFocus(-1, 0);
+                break;
+            case 'ArrowDown':
+                e.preventDefault();
+                moveFocus(1, 0);
+                break;
+            case 'ArrowLeft':
+                e.preventDefault();
+                moveFocus(0, -1);
+                break;
+            case 'ArrowRight':
+                e.preventDefault();
+                moveFocus(0, 1);
+                break;
+            case ' ':
+            case 'Enter':
+                e.preventDefault();
+                await handleKeyboardAction('reveal');
+                break;
+            case 'f':
+            case 'F':
+                e.preventDefault();
+                await handleKeyboardAction('flag');
+                break;
         }
     });
 
@@ -460,6 +628,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateStatusUi();
         updateCopyLinkButtonState();
         updateUrlFromState();
+        updateFocusedCell();
 
         if (pendingAutoStart) {
             const { row, col } = pendingAutoStart;
