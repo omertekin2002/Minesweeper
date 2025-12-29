@@ -1,13 +1,12 @@
 // Service Worker for Minesweeper - Offline Support
 const CACHE_NAME = 'minesweeper-v1';
 const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/style.css',
-  '/engine.js',
-  '/script.js',
-  '/manifest.json',
-  'https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap'
+  './',
+  './index.html',
+  './style.css',
+  './engine.js',
+  './script.js',
+  './manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
@@ -50,7 +49,7 @@ self.addEventListener('fetch', (event) => {
             if (event.request.destination === 'image') {
               return new Response('', { status: 200, statusText: 'OK' });
             }
-            return caches.match('/index.html');
+            return caches.match('./index.html');
           });
       })
   );

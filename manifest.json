@@ -2,7 +2,7 @@
   "name": "Minesweeper Enhanced",
   "short_name": "Minesweeper",
   "description": "Enhanced Minesweeper with mobile support and performance optimizations",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#f0f2f5",
   "theme_color": "#4a4a4a"
