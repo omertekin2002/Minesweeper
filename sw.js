@@ -1,12 +1,17 @@
 // Service Worker for Minesweeper - Offline Support
-const CACHE_NAME = 'minesweeper-v1';
+const CACHE_NAME = 'minesweeper-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './style.css',
   './engine.js',
   './script.js',
-  './manifest.json'
+  './manifest.json',
+  './favicon.ico?v=1',
+  './favicon.svg?v=1',
+  './assets/apple-touch-icon.png?v=1',
+  './assets/icon-192.png',
+  './assets/icon-512.png'
 ];
 
 self.addEventListener('install', (event) => {
